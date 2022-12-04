@@ -104,7 +104,7 @@ def process_session_folder(
             raw_skel3d_frame_marker_xyz,
             skeleton_reprojection_error_fr_mar,
         ) = triangulate_3d_data(
-            anipose_calibration_object=s.anipose_calibration_object,
+            anipose_calibration_object=s.anipose_triangulate_3d_parameters.anipose_calibration_object,
             mediapipe_2d_data=mediapipe_2d_data,
             output_data_folder_path=Path(s.path_to_output_data_folder)
             / RAW_DATA_FOLDER_NAME,
