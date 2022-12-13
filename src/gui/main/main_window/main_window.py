@@ -1,5 +1,6 @@
 import os
 import shutil
+import uuid
 from pathlib import Path
 from typing import Union
 
@@ -49,6 +50,7 @@ from src.core_processes.post_process_skeleton_data.estimate_skeleton_segment_len
 
 from src.gui.main.app import get_qt_app
 from src.gui.main.app_state.app_state import APP_STATE
+
 from src.gui.main.main_window.left_panel_controls.control_panel import ControlPanel
 from src.gui.main.main_window.right_side_panel.right_side_panel import (
     RightSidePanel,
@@ -73,8 +75,14 @@ logger = logging.getLogger(__name__)
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
-        self._pipedream_ping_dictionary = {"gui_window": "launched"}
+    def __init__(self, global_pipedream_ping_dict: dict):
+
+        self._global_pipedream_ping_dict = global_pipedream_ping_dict
+        self._pipedream_ping_dictionary = {"gui_run_uuid": uuid.uuid4().hex}
+        self._global_pipedream_ping_dict["gui_run_dictionaries"].append(
+            self._pipedream_ping_dictionary
+        )
+
         logger.info("Creating main window")
 
         super().__init__()
@@ -120,6 +128,12 @@ class MainWindow(QMainWindow):
         self._cameras_are_popped_out = False
 
         self._session_id = None
+
+    @property
+    def _send_user_ping_box_is_checked(self):
+        return (
+            self._middle_viewing_panel.welcome_create_or_load_session_panel.send_pings_checkbox.isChecked()
+        )
 
     def _create_main_layout(self):
         main_layout = QSplitter()
@@ -882,16 +896,23 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
 
-        if (
-            self._middle_viewing_panel.welcome_create_or_load_session_panel.send_pings_checkbox.isChecked()
-        ):
-            pipedream_ping_dict = (
-                self._thread_worker_manager.session_progress_dictionary
-            )
-            if Path(get_blender_file_path(self._session_id)).exists():
-                pipedream_ping_dict["blender_file_created"] = True
-            else:
+        if self._send_user_ping_box_is_checked:
+            pipedream_ping_dict = self._global_pipedream_ping_dict
+
+            pipedream_ping_dict[
+                "thread_worker_progress_dictionary"
+            ] = self._thread_worker_manager.session_progress_dictionary
+
+            try:
+                logger.info("Checking if blend file exists")
+                if Path(get_blender_file_path(self._session_id)).exists():
+                    pipedream_ping_dict["blender_file_created"] = True
+                else:
+                    pipedream_ping_dict["blender_file_created"] = False
+            except Exception as e:
+                logger.error(e)
                 pipedream_ping_dict["blender_file_created"] = False
+
             send_pipedream_ping(pipedream_ping_dict)
 
         logger.info("Close Event detected for main window... ")

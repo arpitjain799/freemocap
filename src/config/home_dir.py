@@ -41,7 +41,7 @@ MEDIAPIPE_3D_ORIGIN_ALIGNED_NPY_FILE_NAME = "mediaPipeSkel_3d_origin_aligned.npy
 
 
 def create_default_session_id(string_tag: str = None):
-    session_id = "session_" + time.strftime("%Y-%m-%d-%H_%M_%S")
+    session_id = "session_" + time.strftime("%Y-%m-%d_%H_%M_%S")
 
     if string_tag is not None:
         session_id = session_id + "_" + string_tag
@@ -57,7 +57,7 @@ def get_log_file_path():
 
 
 def create_log_file_name():
-    return "log_" + time.strftime("%m-%d-%Y-%H_%M_%S") + ".log"
+    return "log_" + time.strftime("%m-%d-%Y_%H_%M_%S") + ".log"
 
 
 def save_most_recent_session_id_to_a_toml_in_the_freemocap_data_folder(session_id: str):
