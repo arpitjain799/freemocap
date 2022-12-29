@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import numpy as np
@@ -6,13 +7,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from skellycam.qt_gui.widgets.qt_multi_camera_viewer_widget import (
-    QtMultiCameraViewerWidget,
-)
-
-from src.gui.main.main_window.middle_panel_viewers.welcome_view.welcome_create_or_load_new_session_panel import (
-    WelcomeCreateOrLoadNewSessionPanel,
-)
 
 from src.gui.main.main_window.middle_panel_viewers.camera_stream_grid_view import (
     CameraStreamGridView,
@@ -20,14 +14,18 @@ from src.gui.main.main_window.middle_panel_viewers.camera_stream_grid_view impor
 from src.gui.main.main_window.middle_panel_viewers.session_playback_view.session_playback_view import (
     SessionPlaybackView,
 )
-
-import logging
+from src.gui.main.main_window.middle_panel_viewers.welcome_view.welcome_create_or_load_new_session_panel import (
+    WelcomeCreateOrLoadNewSessionPanel,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class MiddleViewingPanel(QWidget):
-    def __init__(self):
+    def __init__(
+        self,
+        skellycam_viewer_widget: QWidget = None,
+    ):
         super().__init__()
         self._frame = QFrame()
         self._frame.setFrameShape(QFrame.Shape.StyledPanel)
@@ -37,9 +35,11 @@ class MiddleViewingPanel(QWidget):
             WelcomeCreateOrLoadNewSessionPanel()
         )
         self._layout.addWidget(self._welcome_create_or_load_session_panel)
+        if skellycam_viewer_widget is None:
+            self._camera_stream_grid_view = CameraStreamGridView()
+        else:
+            self._camera_stream_grid_view = skellycam_viewer_widget
 
-        # self._camera_stream_grid_view = CameraStreamGridView()
-        self._camera_stream_grid_view = QtMultiCameraViewerWidget(parent=self)
         self._camera_stream_grid_view.hide()
 
         self._layout.addWidget(self._camera_stream_grid_view)

@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QVBoxLayout,
     QToolBox,
+    QWidget,
 )
 
 from src.gui.main.main_window.left_panel_controls.toolbox_widgets.calibrate_capture_volume_panel import (
@@ -27,13 +28,15 @@ panel_title_strings = {
 
 
 class ControlPanel:
-    def __init__(self):
+    def __init__(self, skellycam_parameter_tree_widget: QWidget = None):
         self._frame = QFrame()
         self._frame.setFrameShape(QFrame.Shape.StyledPanel)
         self._layout = QVBoxLayout()
         self._frame.setLayout(self._layout)
 
-        self._dictionary_of_toolbox_panels = self._create_dictionary_of_toolbox_panels()
+        self._dictionary_of_toolbox_panels = self._create_dictionary_of_toolbox_panels(
+            skellycam_parameter_tree_widget=skellycam_parameter_tree_widget
+        )
         self._toolbox_widget = self._create_toolbox_widget()
         self._hide_toolbox_panels()
         self._toolbox_widget.setEnabled(False)
@@ -83,12 +86,20 @@ class ControlPanel:
             toolbox_widget.setCurrentWidget(panel)
         return toolbox_widget
 
-    def _create_dictionary_of_toolbox_panels(self):
+    def _create_dictionary_of_toolbox_panels(
+        self, skellycam_parameter_tree_widget: QWidget = None
+    ):
         dictionary_of_toolbox_panels = {}
         # self._create_or_load_new_session_panel = WelcomeCreateOrLoadNewSessionPanel()
-        dictionary_of_toolbox_panels[
-            panel_title_strings["cameras"]
-        ] = CameraSetupControlPanel()
+        if skellycam_parameter_tree_widget is None:
+            dictionary_of_toolbox_panels[
+                panel_title_strings["cameras"]
+            ] = CameraSetupControlPanel()
+        else:
+            dictionary_of_toolbox_panels[
+                panel_title_strings["cameras"]
+            ] = skellycam_parameter_tree_widget
+
         dictionary_of_toolbox_panels[
             panel_title_strings["calibration"]
         ] = CalibrateCaptureVolumePanel()

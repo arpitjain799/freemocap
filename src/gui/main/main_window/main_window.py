@@ -5,8 +5,16 @@ from typing import Union
 
 import pandas as pd
 from PyQt6 import QtGui
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction
-from PyQt6.QtWidgets import QMainWindow, QSplitter, QFileDialog, QMenuBar, QMenu
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QSplitter,
+    QFileDialog,
+    QMenuBar,
+    QMenu,
+    QWidget,
+)
 
 from src.blender_stuff.export_to_blender import export_to_blender
 from src.cameras.detection.models import FoundCamerasResponse
@@ -59,6 +67,7 @@ from src.gui.main.main_window.middle_panel_viewers.session_playback_view.middle_
 
 import logging
 
+from src.gui.main.skellycam.prepare_skellycam_widgets import prepare_skellycam_widgets
 from src.gui.main.workers.thread_worker_manager import ThreadWorkerManager
 from src.log.config import LOG_FILE_PATH
 
@@ -90,12 +99,28 @@ class MainWindow(QMainWindow):
         self.setGeometry(0, 0, self._main_window_width, self._main_window_height)
         self._main_layout = self._create_main_layout()
         self._main_layout.setMaximumHeight(self._main_window_height)
+
+        (
+            self._skellycam_viewer_widget,
+            self._skellycam_controller_dock_widget,
+            self._skellycam_parameter_tree_widget,
+        ) = prepare_skellycam_widgets(parent=self)
+
+        self.addDockWidget(
+            Qt.DockWidgetArea.BottomDockWidgetArea,
+            self._skellycam_controller_dock_widget,
+        )
         # left side (control) panel
-        self._control_panel = self._create_control_panel()
+        self._control_panel = self._create_control_panel(
+            skellycam_parameter_tree_widget=self._skellycam_parameter_tree_widget
+        )
         self._main_layout.addWidget(self._control_panel.frame)
 
         # middle (viewing) panel
-        self._middle_viewing_panel = self._create_middle_viewing_panel()
+        self._middle_viewing_panel = self._create_middle_viewing_panel(
+            skellycam_viewer_widget=self._skellycam_viewer_widget,
+            skellycam_controller_dock_widget=self._skellycam_controller_dock_widget,
+        )
         self._main_layout.addWidget(self._middle_viewing_panel.frame)
 
         # right side (info) panel
@@ -128,9 +153,11 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(main_layout)
         return main_layout
 
-    def _create_control_panel(self):
+    def _create_control_panel(self, skellycam_parameter_tree_widget: QWidget = None):
 
-        panel = ControlPanel()
+        panel = ControlPanel(
+            skellycam_parameter_tree_widget=skellycam_parameter_tree_widget
+        )
 
         width = self._main_window_width * 0.2
         height = self._main_window_height
@@ -142,8 +169,12 @@ class MainWindow(QMainWindow):
 
         return panel
 
-    def _create_middle_viewing_panel(self):
-        panel = MiddleViewingPanel()
+    def _create_middle_viewing_panel(
+        self,
+        skellycam_viewer_widget: QWidget = None,
+        skellycam_controller_dock_widget: QWidget = None,
+    ):
+        panel = MiddleViewingPanel(skellycam_viewer_widget=skellycam_viewer_widget)
         width = self._main_window_width * 0.7
         height = self._main_window_height
         panel.frame.setMinimumHeight(int(height / 2))
@@ -333,18 +364,18 @@ class MainWindow(QMainWindow):
             self._import_videos
         )
 
-        # Camera Control Panel
-        self._control_panel.camera_setup_control_panel.apply_settings_to_cameras_button.clicked.connect(
-            self._apply_settings_and_launch_camera_threads
-        )
+        # # Camera Control Panel
+        # self._control_panel.camera_setup_control_panel.apply_settings_to_cameras_button.clicked.connect(
+        #     self._apply_settings_and_launch_camera_threads
+        # )
 
-        self._control_panel.camera_setup_control_panel.redetect_cameras_button.clicked.connect(
-            self._redetect_cameras
-        )
+        # self._control_panel.camera_setup_control_panel.redetect_cameras_button.clicked.connect(
+        #     self._redetect_cameras
+        # )
 
-        self._control_panel.camera_setup_control_panel.pop_out_cameras_button.clicked.connect(
-            self._handle_pop_out_cameras_button_pressed
-        )
+        # self._control_panel.camera_setup_control_panel.pop_out_cameras_button.clicked.connect(
+        #     self._handle_pop_out_cameras_button_pressed
+        # )
 
         # self._control_panel.camera_setup_control_panel.close_cameras_button.clicked.connect(
         #     self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets
@@ -535,7 +566,7 @@ class MainWindow(QMainWindow):
         # ):
         #     self._thread_worker_manager.launch_detect_cameras_worker()
 
-        self._show_camera_control_panel_action.trigger()
+        # self._show_camera_control_panel_action.trigger()
 
         self._middle_viewing_panel.show_camera_streams()
 
@@ -549,9 +580,9 @@ class MainWindow(QMainWindow):
         self, found_cameras_response: FoundCamerasResponse
     ):
         APP_STATE.available_cameras = found_cameras_response.cameras_found_list
-        self._control_panel.camera_setup_control_panel.handle_found_cameras_response(
-            found_cameras_response
-        )
+        # self._control_panel.camera_setup_control_panel.handle_found_cameras_response(
+        #     found_cameras_response
+        # )
 
         if self._auto_launch_camera_streams:
             self._auto_launch_camera_streams = False
@@ -571,9 +602,9 @@ class MainWindow(QMainWindow):
     ):
         logger.info("Applying settings and launching camera threads")
 
-        self._control_panel.camera_setup_control_panel.pop_out_cameras_button.setEnabled(
-            True
-        )
+        # self._control_panel.camera_setup_control_panel.pop_out_cameras_button.setEnabled(
+        #     True
+        # )
 
         # try:
         #     self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
@@ -581,9 +612,9 @@ class MainWindow(QMainWindow):
         #     logger.info(e)
         #     raise e
 
-        dictionary_of_webcam_configs = (
-            self._control_panel.camera_setup_control_panel.get_webcam_configs_from_parameter_tree()
-        )
+        # dictionary_of_webcam_configs = (
+        #     self._control_panel.camera_setup_control_panel.get_webcam_configs_from_parameter_tree()
+        # )
 
         self._cameras_are_popped_out = pop_out_camera_windows
 
@@ -882,6 +913,13 @@ class MainWindow(QMainWindow):
         get_qt_app().exit(EXIT_CODE_REBOOT)
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+
+        try:
+            self._skellycam_viewer_widget.close()
+        except Exception as e:
+            logger.error(f"Error while closing the viewer widget: {e}")
+
+        super().closeEvent(a0)
 
         if (
             self._middle_viewing_panel.welcome_create_or_load_session_panel.send_pings_checkbox.isChecked()
