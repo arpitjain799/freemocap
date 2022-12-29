@@ -6,6 +6,9 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from skellycam.qt_gui.widgets.qt_multi_camera_viewer_widget import (
+    QtMultiCameraViewerWidget,
+)
 
 from src.gui.main.main_window.middle_panel_viewers.welcome_view.welcome_create_or_load_new_session_panel import (
     WelcomeCreateOrLoadNewSessionPanel,
@@ -35,7 +38,8 @@ class MiddleViewingPanel(QWidget):
         )
         self._layout.addWidget(self._welcome_create_or_load_session_panel)
 
-        self._camera_stream_grid_view = CameraStreamGridView()
+        # self._camera_stream_grid_view = CameraStreamGridView()
+        self._camera_stream_grid_view = QtMultiCameraViewerWidget(parent=self)
         self._camera_stream_grid_view.hide()
 
         self._layout.addWidget(self._camera_stream_grid_view)

@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle("freemocap \U0001F480 \U00002728")
+        self.setWindowTitle("FreeMoCap \U0001F480 \U00002728")
         # self._set_icon()
 
         self._main_window_width = int(1920 * 0.9)
@@ -134,11 +134,11 @@ class MainWindow(QMainWindow):
 
         width = self._main_window_width * 0.2
         height = self._main_window_height
-        panel.frame.setMinimumHeight(height / 2)
-        panel.frame.setMinimumWidth(width / 2)
+        panel.frame.setMinimumHeight(int(height / 2))
+        panel.frame.setMinimumWidth(int(width / 2))
         size_hint = panel.frame.sizeHint()
-        size_hint.setWidth(width)
-        size_hint.setHeight(height)
+        size_hint.setWidth(int(width))
+        size_hint.setHeight(int(height))
 
         return panel
 
@@ -146,11 +146,11 @@ class MainWindow(QMainWindow):
         panel = MiddleViewingPanel()
         width = self._main_window_width * 0.7
         height = self._main_window_height
-        panel.frame.setMinimumHeight(height / 2)
-        panel.frame.setMinimumWidth(width / 2)
+        panel.frame.setMinimumHeight(int(height / 2))
+        panel.frame.setMinimumWidth(int(width / 2))
         size_hint = panel.frame.sizeHint()
-        size_hint.setWidth(width)
-        size_hint.setHeight(height)
+        size_hint.setWidth(int(width))
+        size_hint.setHeight(int(height))
 
         return panel
 
@@ -161,11 +161,11 @@ class MainWindow(QMainWindow):
 
         width = self._main_window_width * 0.1
         height = self._main_window_height
-        # panel.frame.setMinimumHeight(height)
-        panel.frame.setMinimumWidth(width / 2)
+        # panel.frame.setMinimumHeight(int(height))
+        panel.frame.setMinimumWidth(int(width / 2))
         size_hint = panel.frame.sizeHint()
-        size_hint.setWidth(width)
-        size_hint.setHeight(height)
+        size_hint.setWidth(int(width))
+        size_hint.setHeight(int(height))
 
         return panel
 
@@ -346,9 +346,9 @@ class MainWindow(QMainWindow):
             self._handle_pop_out_cameras_button_pressed
         )
 
-        self._control_panel.camera_setup_control_panel.close_cameras_button.clicked.connect(
-            self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets
-        )
+        # self._control_panel.camera_setup_control_panel.close_cameras_button.clicked.connect(
+        #     self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets
+        # )
 
         # Calibration panel
         self._control_panel.calibrate_capture_volume_panel.start_recording_button.clicked.connect(
@@ -433,9 +433,9 @@ class MainWindow(QMainWindow):
         #     self._apply_settings_and_launch_camera_threads
         # )
 
-        self._middle_viewing_panel.camera_stream_grid_view.cameras_connected_signal.connect(
-            self._middle_viewing_panel.show_camera_streams
-        )
+        # self._middle_viewing_panel.camera_stream_grid_view.cameras_connected_signal.connect(
+        #     self._middle_viewing_panel.show_camera_streams
+        # )
 
         self._thread_worker_manager.videos_saved_signal.connect(
             self._handle_videos_saved_signal
@@ -529,11 +529,11 @@ class MainWindow(QMainWindow):
             text + ", session_id: " + self._session_id
         )
 
-        if (
-            new_session
-            and self._middle_viewing_panel.welcome_create_or_load_session_panel.auto_detect_cameras_checkbox.isChecked()
-        ):
-            self._thread_worker_manager.launch_detect_cameras_worker()
+        # if (
+        #     new_session
+        #     and self._middle_viewing_panel.welcome_create_or_load_session_panel.auto_detect_cameras_checkbox.isChecked()
+        # ):
+        #     self._thread_worker_manager.launch_detect_cameras_worker()
 
         self._show_camera_control_panel_action.trigger()
 
@@ -558,12 +558,13 @@ class MainWindow(QMainWindow):
             self._apply_settings_and_launch_camera_threads()
 
     def _redetect_cameras(self):
-        try:
-            self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
-        except Exception as e:
-            logger.info(e)
-            raise e
-        self._thread_worker_manager.launch_detect_cameras_worker()
+        pass
+        # try:
+        #     self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
+        # except Exception as e:
+        #     logger.info(e)
+        #     raise e
+        # self._thread_worker_manager.launch_detect_cameras_worker()
 
     def _apply_settings_and_launch_camera_threads(
         self, pop_out_camera_windows: bool = False
@@ -574,11 +575,11 @@ class MainWindow(QMainWindow):
             True
         )
 
-        try:
-            self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
-        except Exception as e:
-            logger.info(e)
-            raise e
+        # try:
+        #     self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
+        # except Exception as e:
+        #     logger.info(e)
+        #     raise e
 
         dictionary_of_webcam_configs = (
             self._control_panel.camera_setup_control_panel.get_webcam_configs_from_parameter_tree()
@@ -593,10 +594,10 @@ class MainWindow(QMainWindow):
             pop_out_camera_windows
         )
 
-        self._middle_viewing_panel.camera_stream_grid_view.create_and_start_camera_widgets(
-            dictionary_of_webcam_configs=dictionary_of_webcam_configs,
-            pop_out_camera_windows=pop_out_camera_windows,
-        )
+        # self._middle_viewing_panel.camera_stream_grid_view.create_and_start_camera_widgets(
+        #     dictionary_of_webcam_configs=dictionary_of_webcam_configs,
+        #     pop_out_camera_windows=pop_out_camera_windows,
+        # )
 
     def _handle_pop_out_cameras_button_pressed(self):
         logger.info("`Pop out cameras` button pressed.")
@@ -607,15 +608,15 @@ class MainWindow(QMainWindow):
 
     def _start_recording_videos(self, panel):
         panel.change_button_states_on_record_start()
-        self._middle_viewing_panel.camera_stream_grid_view.start_recording_videos()
+        # self._middle_viewing_panel.camera_stream_grid_view.start_recording_videos()
 
     def _stop_recording_videos(self, panel, calibration_videos=False):
         panel.change_button_states_on_record_stop()
-        self._middle_viewing_panel.camera_stream_grid_view.stop_recording_videos()
+        # self._middle_viewing_panel.camera_stream_grid_view.stop_recording_videos()
 
-        dictionary_of_video_recorders = (
-            self._middle_viewing_panel.camera_stream_grid_view.gather_video_recorders()
-        )
+        # dictionary_of_video_recorders = (
+        #     self._middle_viewing_panel.camera_stream_grid_view.gather_video_recorders()
+        # )
 
         if calibration_videos:
             folder_to_save_videos = get_calibration_videos_folder_path(self._session_id)
@@ -624,14 +625,14 @@ class MainWindow(QMainWindow):
                 self._session_id
             )
 
-        self._thread_worker_manager.launch_save_videos_thread_worker(
-            folder_to_save_videos=folder_to_save_videos,
-            dictionary_of_video_recorders=dictionary_of_video_recorders,
-            calibration_videos=calibration_videos,
-        )
+        # self._thread_worker_manager.launch_save_videos_thread_worker(
+        #     folder_to_save_videos=folder_to_save_videos,
+        #     dictionary_of_video_recorders=dictionary_of_video_recorders,
+        #     calibration_videos=calibration_videos,
+        # )
 
     def _handle_videos_saved_signal(self, calibration_videos: bool = False):
-        self._middle_viewing_panel.camera_stream_grid_view.reset_video_recorders()
+        #         # self._middle_viewing_panel.camera_stream_grid_view.reset_video_recorders()
 
         if calibration_videos:
             if (
@@ -895,7 +896,7 @@ class MainWindow(QMainWindow):
             send_pipedream_ping(pipedream_ping_dict)
 
         logger.info("Close Event detected for main window... ")
-        self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
+        # self._middle_viewing_panel.camera_stream_grid_view.close_camera_widgets()
 
         if self._session_id is not None:
             session_folder = get_session_folder_path(self._session_id)

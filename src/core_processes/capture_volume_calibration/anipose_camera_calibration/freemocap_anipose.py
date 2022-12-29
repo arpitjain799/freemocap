@@ -723,7 +723,7 @@ class CameraGroup:
         verbose=False,
     ):
         """Given an CxNx2 array of 2D points,
-        where N is the number of points and C is the number of cameras,
+        where  C is the number of cameras and N  is the number of points,
         this performs iterative bundle adjustsment to fine-tune the parameters of the cameras.
         That is, it performs bundle adjustment multiple times, adjusting the weights given to points
         to reduce the influence of outliers.
@@ -1684,13 +1684,17 @@ class CameraGroup:
             )
 
             if init_intrinsics:
-                objp, imgp = board.get_all_calibration_points(rows)
-                mixed = [(o, i) for (o, i) in zip(objp, imgp) if len(o) >= 7]
+                object_points, image_points = board.get_all_calibration_points(rows)
+                mixed = [
+                    (o, i) for (o, i) in zip(object_points, image_points) if len(o) >= 7
+                ]
                 assert (
-                    len(objp) != 0 and len(imgp) != 0
+                    len(object_points) != 0 and len(image_points) != 0
                 ), "No Charuco board points detected"
-                objp, imgp = zip(*mixed)
-                matrix = cv2.initCameraMatrix2D(objp, imgp, tuple(size))
+                object_points, image_points = zip(*mixed)
+                matrix = cv2.initCameraMatrix2D(
+                    object_points, image_points, tuple(size)
+                )
                 camera.set_camera_matrix(matrix)
 
         for i, (row, cam) in enumerate(zip(all_rows, self.cameras)):
@@ -1698,17 +1702,23 @@ class CameraGroup:
 
         charuco_frames = [f["framenum"][1] for f in all_rows[0]]
         merged = merge_rows(all_rows)
-        imgp, extra = extract_points(merged, board, min_cameras=2)
+        image_points, extra = extract_points(merged, board, min_cameras=2)
 
         if init_extrinsics:
-            rtvecs = extract_rtvecs(merged)
+            rotation_and_translation_vectors = extract_rtvecs(merged)
             if verbose:
-                print(get_connections(rtvecs, self.get_names()))
-            rvecs, tvecs = get_initial_extrinsics(rtvecs)
-            self.set_rotations(rvecs)
-            self.set_translations(tvecs)
+                print(
+                    get_connections(rotation_and_translation_vectors, self.get_names())
+                )
+            rotation_vectors, translation_vectors = get_initial_extrinsics(
+                rotation_and_translation_vectors
+            )
+            self.set_rotations(rotation_vectors)
+            self.set_translations(translation_vectors)
 
-        error = self.bundle_adjust_iter(imgp, extra, verbose=verbose, error_threshold=1)
+        error = self.bundle_adjust_iter(
+            image_points, extra, verbose=verbose, error_threshold=1
+        )
 
         return error, merged, charuco_frames
 
