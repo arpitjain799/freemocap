@@ -1,8 +1,8 @@
-from PyQt6.QtWidgets import QWidget, QDockWidget
+from PyQt6.QtWidgets import QDockWidget, QWidget
 from skellycam import (
-    SkellyCamViewerWidget,
     SkellyCamControllerWidget,
     SkellyCamParameterTreeWidget,
+    SkellyCamViewerWidget,
 )
 
 

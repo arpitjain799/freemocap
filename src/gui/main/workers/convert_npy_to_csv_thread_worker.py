@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import pyqtSignal, QThread
 
 from src.core_processes.mediapipe_stuff.convert_mediapipe_npy_to_csv import (
     convert_mediapipe_npy_to_csv,
