@@ -896,6 +896,7 @@ if __name__ == "__main__" or __name__ == "<run_path>":
     # this is the part that actually runs the script
 
     print(f"Running script to create Blender file from freemocap session data from script {__file__}")
+    create_rig_input = True
     try:
         ##% Session path
         # get session path as command line argument
