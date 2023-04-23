@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
     logger.info(
-        "User tried using `pre-alpha` entry point (`import freemocap: freemocap.RunMe() - displaying friendly message then re-directing to `freemocap.__main__:main()` entry point")
+        "User tried using `alpha` entry point (`python src/gui/main/main.py`) - displaying friendly message then re-directing to `freemocap.__main__:main()` entry point")
 
     print("--------------------------------\n"
           "--------------------------------\n"

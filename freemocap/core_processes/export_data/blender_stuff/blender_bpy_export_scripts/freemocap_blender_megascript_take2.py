@@ -9,7 +9,6 @@ import addon_utils
 import bpy
 import numpy as np
 
-
 print("Running script to create Blender file from freemocap session data: " + __file__)
 
 logger = logging.getLogger(__name__)
@@ -289,45 +288,30 @@ def main(recording_path: Union[str, Path],
             ######################
             ### Create Rigify human meta-rig
             print(f"Creating `rigify human meta-rig`")
+
             bpy.ops.object.armature_human_metarig_add()
             human_metarig = bpy.context.editable_objects[-1]
 
-            ##################
-            ### Scale armature
+            human_metarig = scale_human_metarig(human_metarig=human_metarig,
+                                                skeleton_segment_lengths_dict=skeleton_segment_lengths_dict,
+                                                extra_scale_bones={"spine.005": .2})
 
-            bpy.ops.object.mode_set(mode="EDIT")
 
-            for (
-                    segment_name,
-                    rigify_bones_list,
-            ) in rigify_bone_to_skeleton_segment_name_correspondance.items():
+            # Generate `rig` from scaled `metarig`
+            bpy.ops.pose.rigify_generate()
+            rig = bpy.context.editable_objects[-1]
 
-                for rigify_bone_name in rigify_bones_list:
-                    median_segment_length = skeleton_segment_lengths_dict[segment_name]["median"]
-                    median_segment_length *= 0.001  # scale to meters
-
-                    segment_length = median_segment_length / len(
-                        rigify_bones_list
-                    )  # divide by number of bones in segment (for now, eventually will want to set weights
-                    print(f"setting {rigify_bone_name} length to: {segment_length:.3f} m")
-                    human_metarig.data.edit_bones[rigify_bone_name].length = segment_length
-
-            delete_bones = ["pelvis.L",
-                            "pelvis.R",
-                            "breast.L",
-                            "breast.R",
-                            "heel.02.L",
-                            "heel.02.R",
-                            "toe.L",
-                            "toe.R", ]
-
-            for bone in delete_bones:
-                human_metarig.data.edit_bones.remove(human_metarig.data.edit_bones[bone])
-
-            extra_scale_bones = {"spine.005": .2}
-
-            for bone, scale in extra_scale_bones.items():
-                human_metarig.data.edit_bones[bone].length *= scale
+            # delete_bones = ["pelvis.L",
+            #                 "pelvis.R",
+            #                 "breast.L",
+            #                 "breast.R",
+            #                 "heel.02.L",
+            #                 "heel.02.R",
+            #                 "toe.L",
+            #                 "toe.R", ]
+            #
+            # for bone in delete_bones:
+            #     human_metarig.data.edit_bones.remove(human_metarig.data.edit_bones[bone])
 
             ####
             #### Constrain bones to empties
@@ -368,9 +352,12 @@ def main(recording_path: Union[str, Path],
     print(f"Saved .blend file to: {blender_file_save_path}")
 
     print("try to hide the shameful metarig and then save again lol")
-    human_metarig.hide_set = True
-    bpy.ops.wm.save_as_mainfile(filepath=str(blender_file_save_path))
+    try:
+        human_metarig.hide_set = True
+    except:
+        pass
 
+    bpy.ops.wm.save_as_mainfile(filepath=str(blender_file_save_path))
 
     print(
         "____________________________________________________________________________\n",
@@ -381,6 +368,30 @@ def main(recording_path: Union[str, Path],
         "____________________________________________________________________________\n",
         "____________________________________________________________________________",
     )
+
+
+def scale_human_metarig(human_metarig, skeleton_segment_lengths_dict: dict, extra_scale_bones={}):
+
+    bpy.ops.object.mode_set(mode="EDIT")
+    for (
+            segment_name,
+            rigify_bones_list,
+    ) in rigify_metarig_bone_to_skeleton_segment_name_correspondance.items():
+
+        for rigify_bone_name in rigify_bones_list:
+            median_segment_length = skeleton_segment_lengths_dict[segment_name]["median"]
+            median_segment_length *= 0.001  # scale to meters
+
+            segment_length = median_segment_length / len(
+                rigify_bones_list
+            )  # divide by number of bones in segment (for now, eventually will want to set weights
+            print(f"setting {rigify_bone_name} length to: {segment_length:.3f} m")
+            human_metarig.data.edit_bones[rigify_bone_name].length = segment_length
+
+    for bone, scale in extra_scale_bones.items():
+        human_metarig.data.edit_bones[bone].length *= scale
+
+    return human_metarig
 
 
 def add_videos_to_scene(videos_path: Union[Path, str], parent_object: bpy.types.Object, vid_location_scale: float = 2):
@@ -628,7 +639,7 @@ def creating_stick_figure_mesh_from_bone_dictionary(trajectory_frame_marker_xyz:
     print("creating_stick_figure_mesh_from_bone_dictionary")
 
     assert (
-                len(trajectory_frame_marker_xyz.shape) == 3), "trajectory_frame_marker_xyz must have three axes - [frame, marker, xyz] (e.g. skeleton data from a single frame"
+            len(trajectory_frame_marker_xyz.shape) == 3), "trajectory_frame_marker_xyz must have three axes - [frame, marker, xyz] (e.g. skeleton data from a single frame"
     mesh = bpy.data.meshes.new("stick_figure_mesh")
 
     init_zero_vertices = np.zeros((trajectory_frame_marker_xyz.shape[1], 3))
@@ -651,6 +662,7 @@ def creating_stick_figure_mesh_from_bone_dictionary(trajectory_frame_marker_xyz:
             vertex.co = trajectory_frame_marker_xyz[frame_number, vertex.index, :]
             vertex.keyframe_insert(data_path="co", frame=frame_number)  # keyframe the vertex location
         mesh.update()
+
 
 def get_video_paths(path_to_video_folder: Path) -> list:
     """Search the folder for 'mp4' files (case insensitive) and return them as a list"""
@@ -806,7 +818,7 @@ mediapipe_virtual_marker_definitions_dict = {
 }
 
 # Skeleton segments names and the rigify bone names that they correspond to
-rigify_bone_to_skeleton_segment_name_correspondance = {
+rigify_metarig_bone_to_skeleton_segment_name_correspondance = {
     "lower_spine": ["spine", "spine.001"],
     "upper_spine": ["spine.002", "spine.003"],
     "head": ["spine.004", "spine.005", "spine.006"],
@@ -827,20 +839,20 @@ rigify_bone_to_skeleton_segment_name_correspondance = {
 # A dictionary where the `keys` are  rigify bone names and the `values` are bone constraints and their parameters.
 # NOTE - the `targets` must correspond to the `mediapipe_body_names` list above (or one of the virtural markers we'll make later)
 rig_constraint_dict_of_dicts = {
-    "spine": {
+    "ORG-spine": {
         "COPY_LOCATION": {"target": "hips_center"},
     },
-    "spine.003": {
-        "IK": {"target": "neck_center", "chain_length": 4},
+    "ORG-spine.003": {
+        "IK": {"target": "rig","subtarget": "ORG-spine.004", "chain_length": 4},
     },
-    "spine.004": {
+    "ORG-spine.004": {
         "COPY_LOCATION": {"target": "neck_center"},
     },
-    "spine.006": {
+    "ORG-spine.006": {
         "IK": {"target": "head_center", "chain_length": 2},
     },
-    "face": {
-        "COPY_LOCATION": {"target": "armature", "subtarget": "spine.006"},
+    "ORG-face": {
+        "COPY_LOCATION": {"target": "armature", "subtarget": "ORG-spine.006"},
         "DAMPED_TRACK": {
             "target": "head_center",
         },
@@ -857,50 +869,50 @@ rig_constraint_dict_of_dicts = {
             "influence": 1.0,
         },
     },
-    "shoulder.R": {
+    "ORG-shoulder.R": {
         "COPY_LOCATION": {"target": "neck_center"},
         "DAMPED_TRACK": {"target": "right_shoulder"},
     },
-    "upper_arm.R": {
+    "ORG-upper_arm.R": {
         "DAMPED_TRACK": {"target": "right_elbow"},
     },
-    "forearm.R": {
+    "ORG-forearm.R": {
         "DAMPED_TRACK": {"target": "right_wrist"},
     },
-    "hand.R": {
+    "ORG-hand.R": {
         "DAMPED_TRACK": {"target": "right_index"},
     },
-    "shoulder.L": {
+    "ORG-shoulder.L": {
         "COPY_LOCATION": {"target": "neck_center"},
         "DAMPED_TRACK": {"target": "left_shoulder"},
     },
-    "upper_arm.L": {
+    "ORG-upper_arm.L": {
         "DAMPED_TRACK": {"target": "left_elbow"},
     },
-    "forearm.L": {
+    "ORG-forearm.L": {
         "DAMPED_TRACK": {"target": "left_wrist"},
     },
-    "hand.L": {
+    "ORG-hand.L": {
         "DAMPED_TRACK": {"target": "left_index"},
     },
-    "thigh.R": {
+    "ORG-thigh.R": {
         "COPY_LOCATION": {"target": "right_hip"},
         "DAMPED_TRACK": {"target": "right_knee"},
     },
-    "shin.R": {
+    "ORG-shin.R": {
         "DAMPED_TRACK": {"target": "right_ankle"},
     },
-    "foot.R": {
+    "ORG-foot.R": {
         "DAMPED_TRACK": {"target": "right_foot_index"},
     },
-    "thigh.L": {
+    "ORG-thigh.L": {
         "COPY_LOCATION": {"target": "left_hip"},
         "DAMPED_TRACK": {"target": "left_knee"},
     },
-    "shin.L": {
+    "ORG-shin.L": {
         "DAMPED_TRACK": {"target": "left_ankle"},
     },
-    "foot.L": {
+    "ORG-foot.L": {
         "DAMPED_TRACK": {"target": "left_foot_index"},
     },
 }
@@ -911,7 +923,7 @@ if __name__ == "__main__" or __name__ == "<run_path>":
 
     # this is the part that actually runs the script
     argv = sys.argv
-    create_rig_input = False
+    create_rig_input = True
 
     print(f"Running script to create Blender file from freemocap session data from script {__file__}")
     try:
@@ -927,7 +939,6 @@ if __name__ == "__main__" or __name__ == "<run_path>":
         print(f"There was a problem loading command line arguments: {e}. Using hardcoded values instead.")
 
         if len(argv) == 0:
-
             ####
             # Change the path below (`recording_path_input`) to the path to your recording session folder
             ####
@@ -944,4 +955,4 @@ if __name__ == "__main__" or __name__ == "<run_path>":
     main(recording_path=recording_path_input,
          blender_file_save_path=blender_file_save_path_input,
          mediapipe_empty_names=mediapipe_empty_names,
-         create_rig=create_rig_input,)
+         create_rig=create_rig_input, )
